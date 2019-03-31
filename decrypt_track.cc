@@ -15,13 +15,14 @@
 #include "bigint/BigIntegerLibrary.hh"
 #include "sha1.h"
 #include "aes.h"
+#include <sys/sysctl.h>
 using namespace std;
 
 #define error(args...) { fprintf(stderr, "ERROR: "); fprintf(stderr, ## args); fflush(stderr); exit(1); }
 #define log(args...) { fprintf(stderr, ## args); fflush(stderr); }
 typedef unsigned char byte;
 
-uint32_t msec() {
+uint64_t msec() {
 #if WINDOWS
   LARGE_INTEGER frequency;
   LARGE_INTEGER value;
@@ -270,7 +271,7 @@ void RSA(const byte *input, const byte *n, const byte *e, int e_len, byte *outpu
   bigToBuf(B, output, 128);
 }
 
-static uint32_t byteswap32(uint32_t x) {
+static uint64_t byteswap32(uint64_t x) {
   return (x << 24) + ((x & 0xff00) << 8) + ((x >> 8) & 0xff00) + (x >> 24);
 }
 static uint64_t byteswap64(uint64_t x) {
@@ -279,10 +280,10 @@ static uint64_t byteswap64(uint64_t x) {
 
 byte *YlCJ3lg;
 byte *Zmdjk32jjoap;
-uint32_t token8[2];
-uint32_t token4;
+uint64_t token8[2];
+uint64_t token4;
 
-void YlCJ3lg_call(uint32_t opcode, int nargs, uint32_t *args) {
+void YlCJ3lg_call(uint64_t opcode, int nargs, uint64_t *args) {
   // build argument list
   byte info[100];
   memset(info, 0, 100);
@@ -291,7 +292,7 @@ void YlCJ3lg_call(uint32_t opcode, int nargs, uint32_t *args) {
   info[17] = 0; // args processed so far
   int p = 18;
   for (int i = 0; i < nargs; i++) {
-    uint32_t arg = args[i];
+    uint64_t arg = args[i];
     int len = 0;
     while (arg) {
       len++;
@@ -311,25 +312,25 @@ void YlCJ3lg_call(uint32_t opcode, int nargs, uint32_t *args) {
   for (int i = 0; i < 16; i++) check[i] = info[i + 2];
 
   // final obfuscation
-  *(uint32_t*)&info[6] ^= byteswap32(opcode);
+  *(uint64_t*)&info[6] ^= byteswap32(opcode);
   
   byte output[16];
   if (opcode != 0x86adbd76) log("calling YlCJ3lg/%x\n", opcode);
-  uint32_t start = msec();
-  int res = ((int(*)(uint32_t,uint32_t,uint32_t,uint32_t,uint32_t,uint32_t,uint32_t,uint32_t))YlCJ3lg)(
-    (uint32_t)7,
-    (uint32_t)token8[0],
-    (uint32_t)token8[1],
-    (uint32_t)opcode,
-    (uint32_t)0,
-    (uint32_t)check,
-    (uint32_t)info,
-    (uint32_t)output);
+  uint64_t start = msec();
+  int res = ((int(*)(uint64_t,uint64_t,uint64_t,uint64_t,uint64_t,uint64_t,uint64_t,uint64_t))YlCJ3lg)(
+    (uint64_t)7,
+    (uint64_t)token8[0],
+    (uint64_t)token8[1],
+    (uint64_t)opcode,
+    (uint64_t)0,
+    (uint64_t)check,
+    (uint64_t)info,
+    (uint64_t)output);
   if (opcode != 0x86adbd76) log("returning from YlCJ3lg/%x (%d ms)\n", opcode, msec() - start);
   if (res) error("YlCJ3lg/%x return: %x\n", opcode, res);
   
   // check output
-  *(uint32_t*)&info[6] ^= byteswap32(opcode);
+  *(uint64_t*)&info[6] ^= byteswap32(opcode);
   if (info[0] != 0) error("bad info out %d\n", info[0]);
   int len = info[1];
   byte badresult[7] = {0x8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
@@ -356,19 +357,19 @@ void init(byte *mac_addr, char *keystoredir) {
   Zmdjk32jjoap = (byte*)dlsym(corefp1, "Zmdjk32jjoap");
 #endif
   
-  uint32_t two = 2;
+  uint64_t two = 2;
   const byte *CoreFPCert;
   int CoreFPCertLen;
   byte encrypted_handshake[128];
-  int res = ((int(*)(uint32_t,uint32_t,uint32_t,uint32_t,uint32_t,uint32_t,uint32_t,uint32_t))WIn9UJ86JKdV4dM)(
-    (uint32_t)7,
-    (uint32_t)token8,
-    (uint32_t)&two,
-    (uint32_t)iTunesCert,
-    (uint32_t)iTunesCertLen,
-    (uint32_t)encrypted_handshake,
-    (uint32_t)&CoreFPCert,
-    (uint32_t)&CoreFPCertLen);
+  int res = ((int(*)(uint64_t,uint64_t,uint64_t,uint64_t,uint64_t,uint64_t,uint64_t,uint64_t))WIn9UJ86JKdV4dM)(
+    (uint64_t)7,
+    (uint64_t)token8,
+    (uint64_t)&two,
+    (uint64_t)iTunesCert,
+    (uint64_t)iTunesCertLen,
+    (uint64_t)encrypted_handshake,
+    (uint64_t)&CoreFPCert,
+    (uint64_t)&CoreFPCertLen);
   if (res) error("WIn9UJ86JKdV4dM return: %x\n", res);
   
   byte decrypted_handshake[128];
@@ -378,47 +379,47 @@ void init(byte *mac_addr, char *keystoredir) {
   byte recrypted_handshake[128];
   RSA(decrypted_handshake, &CoreFPCert[0x154], &CoreFPCert[0x1d6], 3, recrypted_handshake);
   
-  res = ((int(*)(uint32_t,uint32_t,uint32_t,uint32_t))X46O5IeS)(
-    (uint32_t)7,
-    (uint32_t)token8[0],
-    (uint32_t)token8[1],
-    (uint32_t)recrypted_handshake);
+  res = ((int(*)(uint64_t,uint64_t,uint64_t,uint64_t))X46O5IeS)(
+    (uint64_t)7,
+    (uint64_t)token8[0],
+    (uint64_t)token8[1],
+    (uint64_t)recrypted_handshake);
   if (res) error("X46O5IeS return: %x\n", res);
   
   // read sidb
   struct {
-    uint32_t size;
+    uint64_t size;
     byte data[6];
   } mac = { 6 };
   memcpy(mac.data, mac_addr, 6);
-  uint32_t args[5] = {1, 0, (uint32_t)&mac, (uint32_t)keystoredir, (uint32_t)&token4};
+  uint64_t args[5] = {1, 0, (uint64_t)&mac, (uint64_t)keystoredir, (uint64_t)&token4};
   YlCJ3lg_call(0xf4419e34, 5, args);
 }
 
-map<uint64_t, uint32_t> context_table;
+map<uint64_t, uint64_t> context_table;
 void init_track(uint64_t track_id, byte *sinf, int sinf_size, byte *uuid, int uuid_size) {
-  log("initializing track %u (sinf %d uuid %d)\n", (uint32_t)track_id, sinf_size, uuid_size);
+  log("initializing track %u (sinf %d uuid %d)\n", (uint64_t)track_id, sinf_size, uuid_size);
   
   // build common args
   struct {
-    uint32_t sinf_size;
+    uint64_t sinf_size;
     byte *sinf;
-    uint32_t uuid_size;
+    uint64_t uuid_size;
     byte *uuid;
   } sinf_uuid = {sinf_size, sinf, uuid_size, uuid};
   byte random[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   struct {
-    uint32_t len;
+    uint64_t len;
     byte *random;
-    uint32_t one;
-    uint32_t sinf_uuid;
-  } args = {16, random, 1, (uint32_t)&sinf_uuid};
+    uint64_t one;
+    uint64_t sinf_uuid;
+  } args = {16, random, 1, (uint64_t)&sinf_uuid};
   
   // get challenge from DRM library
   byte *challenge;
-  uint32_t challenge_len;
-  uint32_t handle;
-  uint32_t args1[6] = {1, token4, (uint32_t)&args, (uint32_t)&challenge, (uint32_t)&challenge_len, (uint32_t)&handle};
+  uint64_t challenge_len;
+  uint64_t handle;
+  uint64_t args1[6] = {1, token4, (uint64_t)&args, (uint64_t)&challenge, (uint64_t)&challenge_len, (uint64_t)&handle};
   YlCJ3lg_call(0x66eb8880, 6, args1);
   
   byte sha[20];
@@ -450,24 +451,24 @@ void init_track(uint64_t track_id, byte *sinf, int sinf_size, byte *uuid, int uu
   *(uint16_t*)(response_wrapper + 0) = 3;
   response_wrapper[2] = 0;
   response_wrapper[3] = 0;
-  *(uint32_t*)(response_wrapper + 4) = 32;
-  *(uint32_t*)(response_wrapper + 8) = 740;
+  *(uint64_t*)(response_wrapper + 4) = 32;
+  *(uint64_t*)(response_wrapper + 8) = 740;
   memcpy(response_wrapper + 12, response, 32);
   memcpy(response_wrapper + 44, unkCert, 740);
   
   // authenticate ourselves
-  uint32_t args2[5] = {1, token4, (uint32_t)response_wrapper, 784, handle};
+  uint64_t args2[5] = {1, token4, (uint64_t)response_wrapper, 784, handle};
   YlCJ3lg_call(0xe02fb955, 5, args2);
 
   // get decryption context for track
-  uint32_t track_context;
-  uint32_t args3[8] = {4, token4, (uint32_t)&args, handle, 1, 1, 0, (uint32_t)&track_context};
+  uint64_t track_context;
+  uint64_t args3[8] = {4, token4, (uint64_t)&args, handle, 1, 1, 0, (uint64_t)&track_context};
   YlCJ3lg_call(0xa458f619, 8, args3);
   if (!track_context) error("track initialization failed\n");
   context_table[track_id] = track_context;
 }
 
-void decrypt(uint64_t track_id, uint32_t size, byte *data) {
+void decrypt(uint64_t track_id, uint64_t size, byte *data) {
   static bool patched = false;
   if (!patched) {
     // patch decryption code to prevent obfuscating result
@@ -487,8 +488,12 @@ void decrypt(uint64_t track_id, uint32_t size, byte *data) {
     patch_addr[8] = 0x90; // nop
 #else
     byte *patch_addr = Zmdjk32jjoap + 3312425;
-    int pagesize = sysconf(_SC_PAGESIZE);
-    int res = mprotect((void*)((uint32_t)patch_addr / pagesize * pagesize), 2 * pagesize, PROT_READ | PROT_WRITE | PROT_EXEC);
+    size_t size;
+    sysctlbyname("hw.machine", NULL, &size, NULL, 0);
+    char *machine = new char();
+    int pagesize = sysctlbyname("hw.machine", machine, &size, NULL, 0);
+
+    int res = mprotect((void*)((uint64_t)patch_addr / pagesize * pagesize), 2 * pagesize, PROT_READ | PROT_WRITE | PROT_EXEC);
     if (res) error("mprotect failed %d\n", res);
     patch_addr[0] = 0xb8;  // mov $0x20000000,%eax
     patch_addr[1] = 0;
@@ -501,14 +506,14 @@ void decrypt(uint64_t track_id, uint32_t size, byte *data) {
   }
   
   // decrypt data
-  uint32_t track_context = context_table[track_id];
-  uint32_t args[6] = {2, track_context, (uint32_t)data, size, (uint32_t)data, 0};
+  uint64_t track_context = context_table[track_id];
+  uint64_t args[6] = {2, track_context, (uint64_t)data, size, (uint64_t)data, 0};
   YlCJ3lg_call(0x86adbd76, 6, args);
 }
 
 struct DecryptQueueEntry {
   uint64_t track_id;
-  uint32_t size;
+  uint64_t size;
   byte *data;
 };
 
@@ -537,7 +542,7 @@ int main(int argc, char *argv[]) {
       case 1: { // initialize
         byte mac_addr[6];
         fread(mac_addr, 6, 1, in);
-        uint32_t keystoredir_size;
+        uint64_t keystoredir_size;
         fread(&keystoredir_size, 4, 1, in);
         keystoredir_size = byteswap32(keystoredir_size);
         char *keystoredir = (char*)malloc(keystoredir_size + 1);
@@ -551,13 +556,13 @@ int main(int argc, char *argv[]) {
         fread(&track_id, 8, 1, in);
         track_id = byteswap64(track_id);
         
-        uint32_t sinf_size;
+        uint64_t sinf_size;
         fread(&sinf_size, 4, 1, in);
         sinf_size = byteswap32(sinf_size);
         byte *sinf = (byte*)malloc(sinf_size);
         fread(sinf, sinf_size, 1, in);
         
-        uint32_t uuid_size;
+        uint64_t uuid_size;
         fread(&uuid_size, 4, 1, in);
         uuid_size = byteswap32(uuid_size);
         byte *uuid;
@@ -576,7 +581,7 @@ int main(int argc, char *argv[]) {
         fread(&track_id, 8, 1, in);
         track_id = byteswap64(track_id);
         
-        uint32_t size;
+        uint64_t size;
         fread(&size, 4, 1, in);
         size = byteswap32(size);
         byte *data = (byte*)malloc(size);
