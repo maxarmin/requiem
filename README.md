@@ -1,3 +1,26 @@
+Compile
+=======
+
+###Requirements
+
+- Java SDK 6 for Mac
+- g++ compiler
+- apache-ant-1.9.14 (Java5)
+- jarbundler (http://informagen.com/JarBundler/) for ant **compile with Java SDK 6 before using**
+
+
+```
+git clone https://github.com/ridvan70/requiem.git
+cd requiem
+export JAVA_HOME=$(/usr/libexec/java_home -v 1.6)
+make
+```
+
+Help
+====
+
+to support iTunes library version 12
+
 Requiem
 =======
 
