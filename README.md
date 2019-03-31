@@ -3,7 +3,7 @@ Compile (Mac)
 
 ###Requirements
 
-- Java SDK 6 for Mac
+- Java SDK 6 and 7 for Mac
 - g++ compiler
 - apache-ant-1.9.14 (Java5)
 - jarbundler (http://informagen.com/JarBundler/) for ant **compile with Java SDK 6 before using**
